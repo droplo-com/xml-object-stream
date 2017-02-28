@@ -4,7 +4,7 @@
 "use strict";
 const util = require('util');
 const EventEmitter = require('events').EventEmitter;
-const expat = require('node-expat');
+const XMLStream = require('./xml-stream');
 /**
  *
  * @param {stream.Readable} stream
@@ -31,9 +31,9 @@ function XMLObjectStream(stream, options) {
 	this.objectStack = [];
 	/**
 	 *
-	 * @type {expat.Parser}
+	 * @type {XMLStream}
 	 */
-	this.parser = new expat.Parser('UTF-8');
+	this.parser = new XMLStream(stream);
 	/**
 	 *
 	 * @type {stream.Readable}
@@ -79,12 +79,6 @@ util.inherits(XMLObjectStream, EventEmitter);
 /**
  *
  */
-XMLObjectStream.prototype.parse = function () {
-	this.xmlStream.pipe(this.parser);
-};
-/**
- *
- */
 XMLObjectStream.prototype.destroy = function () {
 	this.xmlStream.destroy();
 };
@@ -107,11 +101,14 @@ XMLObjectStream.prototype.resume = function () {
  * @param {Object} attributes
  */
 function startElement(xos, name, attributes) {
+	if (name === undefined) {
+		return;
+	}
 	xos.emit('startElement', name, attributes);
 	xos.elementStack.push(name);
 	if (xos.elementStack.length > 1) {
 		const element = {
-			$path : xos.elementStack.join('/'),
+			//$path : xos.elementStack.join('/'),
 			$name : name,
 			$ : attributes
 		};
@@ -137,11 +134,17 @@ function startElement(xos, name, attributes) {
  * @param {String} name
  */
 function endElement(xos, name) {
+	if (name === undefined) {
+		return;
+	}
 	xos.emit('endElement', name);
 	const lastName = xos.elementStack.pop();
 	const lastObject = xos.objectStack.pop();
 	if (lastObject !== undefined && typeof lastObject.$text === 'string') {
 		lastObject.$text = lastObject.$text.trim();
+		if (lastObject.$text.length === 0) {
+			delete lastObject.$text;
+		}
 	}
 	if (name !== lastName) {
 		return xos.emit('error', 'Unexpected end of element "' + name + '"');
@@ -160,6 +163,9 @@ function endElement(xos, name) {
  * @param {String} text
  */
 function onText(xos, text) {
+	if (text === undefined) {
+		return;
+	}
 	if (xos.objectStack.length !== 0) {
 		const current = xos.objectStack[xos.objectStack.length - 1];
 		if (typeof current.$text !== 'string') {
