@@ -1,5 +1,5 @@
 {
-  "name": "@etk-pl/xml-object-stream",
+  "name": "@etk/xml-object-stream",
   "version": "0.2.0",
   "description": "",
   "main": "index.js",
