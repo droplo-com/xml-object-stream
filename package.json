@@ -1,6 +1,6 @@
 {
   "name": "@etk-pl/xml-object-stream",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -19,10 +19,11 @@
   },
   "homepage": "https://github.com/etk-pl/xml-object-stream#readme",
   "dependencies": {
-    "node-expat": "^2.3.15"
+    "iconv": "^2.2.1",
+    "node-expat": "^2.3.15",
+    "readable-stream": "^2.2.3"
   },
   "devDependencies": {
-    "@etk/wsab": "^1.0.0-rc1",
     "ink-docstrap": "^1.3.0",
     "istanbul": "^0.4.5",
     "jsdoc": "^3.4.3",
