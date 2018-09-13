@@ -10,6 +10,7 @@ const XMLStream = require('./xml-stream');
  * @param {stream.Readable} stream
  * @param {Object} [options]
  * @param {Array} [options.emitElements]
+ * @param {Number} [options.defaultElementDepth]
  * @returns {XMLObjectStream}
  * @constructor
  */
@@ -74,13 +75,14 @@ function XMLObjectStream(stream, options) {
 		this.emitAll = false;
 		this.emitElements = new Set(options.emitElements);
 	}
+	this.defaultElementDepth = options.defaultElementDepth || 1;
 }
 util.inherits(XMLObjectStream, EventEmitter);
 /**
  *
  */
 XMLObjectStream.prototype.destroy = function () {
-	this.xmlStream.destroy();
+	return this.xmlStream.destroy();
 };
 /**
  *
@@ -106,7 +108,7 @@ function startElement(xos, name, attributes) {
 	}
 	xos.emit('startElement', name, attributes);
 	xos.elementStack.push(name);
-	if (xos.elementStack.length > 1) {
+	if (xos.elementStack.length > xos.defaultElementDepth) {
 		const element = {
 			//$path : xos.elementStack.join('/'),
 			$name : name,
@@ -150,7 +152,7 @@ function endElement(xos, name) {
 		return xos.emit('error', 'Unexpected end of element "' + name + '"');
 	}
 	if (xos.emitAll) {
-		if (xos.objectStack.length === 0 && xos.elementStack.length !== 0) {
+		if (xos.elementStack.length === xos.defaultElementDepth) {
 			xos.emit('element', lastObject);
 		}
 	} else if (xos.emitElements.has(name)) {
