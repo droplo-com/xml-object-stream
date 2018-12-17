@@ -2,9 +2,10 @@
  * @author Michał Żaloudik <ponury.kostek@gmail.com>
  */
 "use strict";
-const util = require('util');
-const EventEmitter = require('events').EventEmitter;
-const XMLStream = require('./xml-stream');
+const util = require("util");
+const EventEmitter = require("events").EventEmitter;
+const XMLStream = require("./xml-stream");
+
 /**
  *
  * @param {stream.Readable} stream
@@ -40,26 +41,26 @@ function XMLObjectStream(stream, options) {
 	 * @type {stream.Readable}
 	 */
 	this.xmlStream = stream;
-	this.parser.on('startElement', (name, attributes) => {
+	this.parser.on("startElement", (name, attributes) => {
 		startElement(this, name, attributes);
 	});
-	this.parser.on('endElement', (name) => {
+	this.parser.on("endElement", (name) => {
 		endElement(this, name);
 	});
-	this.parser.on('text', (text) => {
+	this.parser.on("text", (text) => {
 		onText(this, text);
 	});
-	this.parser.on('end', () => {
-		this.emit('end');
+	this.parser.on("end", () => {
+		this.emit("end");
 	});
-	this.parser.on('pause', () => {
-		this.emit('pause');
+	this.parser.on("pause", () => {
+		this.emit("pause");
 	});
-	this.parser.on('resume', () => {
-		this.emit('resume');
+	this.parser.on("resume", () => {
+		this.emit("resume");
 	});
-	this.parser.on('error', (err) => {
-		this.emit('error', err);
+	this.parser.on("error", (err) => {
+		this.emit("error", err);
 	});
 	/**
 	 *
@@ -77,25 +78,30 @@ function XMLObjectStream(stream, options) {
 	}
 	this.defaultElementDepth = options.defaultElementDepth || 1;
 }
+
 util.inherits(XMLObjectStream, EventEmitter);
 /**
  *
+ * @returns {*}
  */
 XMLObjectStream.prototype.destroy = function () {
 	return this.xmlStream.destroy();
 };
 /**
  *
+ * @returns {*|void}
  */
 XMLObjectStream.prototype.pause = function () {
-	this.parser.pause();
+	return this.parser.pause();
 };
 /**
  *
+ * @returns {*|void|Promise<void>}
  */
 XMLObjectStream.prototype.resume = function () {
-	this.parser.resume();
+	return this.parser.resume();
 };
+
 /**
  *
  * @param {XMLObjectStream} xos
@@ -106,13 +112,13 @@ function startElement(xos, name, attributes) {
 	if (name === undefined) {
 		return;
 	}
-	xos.emit('startElement', name, attributes);
+	xos.emit("startElement", name, attributes);
 	xos.elementStack.push(name);
 	if (xos.elementStack.length > xos.defaultElementDepth) {
 		const element = {
 			//$path : xos.elementStack.join('/'),
-			$name : name,
-			$ : attributes
+			$name: name,
+			$: attributes
 		};
 		if (xos.objectStack.length !== 0) {
 			const parent = xos.objectStack[xos.objectStack.length - 1];
@@ -130,6 +136,7 @@ function startElement(xos, name, attributes) {
 		xos.objectStack.push(element);
 	}
 }
+
 /**
  *
  * @param {XMLObjectStream} xos
@@ -139,26 +146,27 @@ function endElement(xos, name) {
 	if (name === undefined) {
 		return;
 	}
-	xos.emit('endElement', name);
+	xos.emit("endElement", name);
 	const lastName = xos.elementStack.pop();
 	const lastObject = xos.objectStack.pop();
-	if (lastObject !== undefined && typeof lastObject.$text === 'string') {
+	if (lastObject !== undefined && typeof lastObject.$text === "string") {
 		lastObject.$text = lastObject.$text.trim();
 		if (lastObject.$text.length === 0) {
 			delete lastObject.$text;
 		}
 	}
 	if (name !== lastName) {
-		return xos.emit('error', 'Unexpected end of element "' + name + '"');
+		return xos.emit("error", "Unexpected end of element \"" + name + "\"");
 	}
 	if (xos.emitAll) {
 		if (xos.elementStack.length === xos.defaultElementDepth) {
-			xos.emit('element', lastObject);
+			xos.emit("element", lastObject);
 		}
 	} else if (xos.emitElements.has(name)) {
-		xos.emit('element', lastObject);
+		xos.emit("element", lastObject);
 	}
 }
+
 /**
  *
  * @param {XMLObjectStream} xos
@@ -170,10 +178,11 @@ function onText(xos, text) {
 	}
 	if (xos.objectStack.length !== 0) {
 		const current = xos.objectStack[xos.objectStack.length - 1];
-		if (typeof current.$text !== 'string') {
-			current.$text = '';
+		if (typeof current.$text !== "string") {
+			current.$text = "";
 		}
 		current.$text = current.$text + text;
 	}
 }
+
 module.exports = XMLObjectStream;

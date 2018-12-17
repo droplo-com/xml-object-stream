@@ -7,7 +7,7 @@ const __own = Object.prototype.hasOwnProperty;
 
 // Tests if object is empty (has no own properties).
 function isEmpty(obj) {
-	for (let key in obj) {
+	for (const key in obj) {
 		if (__own.call(obj, key)) {
 			return false;
 		}
@@ -26,7 +26,7 @@ const entities = {
 
 // Escapes text for XML.
 function escape(value) {
-	return value.replace(/"|&|'|<|>/g, function (entity) {
+	return value.replace(/["&'<>]/g, function (entity) {
 		return entities[entity];
 	});
 }
@@ -212,8 +212,9 @@ function parseEvent(event) {
 // Compiles a given selector object to a finite automata
 // and returns its last state.
 function getFinalState(selector) {
+	let finalState;
 	if (__own.call(this._finalStates, selector.normalized)) {
-		var finalState = this._finalStates[selector.normalized];
+		finalState = this._finalStates[selector.normalized];
 	} else {
 		const n = selector.parts.length;
 		let immediate = false;
@@ -230,7 +231,7 @@ function getFinalState(selector) {
 				immediate = false;
 			}
 		}
-		var finalState = this._lastState++;
+		finalState = this._lastState++;
 		this._finalStates[selector.normalized] = finalState;
 	}
 	return finalState;
