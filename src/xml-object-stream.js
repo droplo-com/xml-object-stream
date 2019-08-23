@@ -54,6 +54,9 @@ function XMLObjectStream(stream, options) {
 	this.parser.on("end", () => {
 		this.emit("end");
 	});
+	this.parser.on("close", () => {
+		this.emit("close");
+	});
 	this.parser.on("pause", () => {
 		this.emit("pause");
 	});
