@@ -12,6 +12,7 @@ const XMLStream = require("./xml-stream");
  * @param {Object} [options]
  * @param {Array} [options.emitElements]
  * @param {Number} [options.defaultElementDepth]
+ * @param {Number} [options.maxChildren]
  * @returns {XMLObjectStream}
  * @constructor
  */
@@ -77,6 +78,10 @@ function XMLObjectStream(stream, options) {
 		this.emitElements = new Set(options.emitElements);
 	}
 	this.defaultElementDepth = options.defaultElementDepth || 1;
+	this.maxChildren = 0;
+	if (options.maxChildren && typeof options.maxChildren === "number" && options.maxChildren > 0) {
+		this.maxChildren = options.maxChildren;
+	}
 }
 
 util.inherits(XMLObjectStream, EventEmitter);
@@ -116,7 +121,7 @@ function startElement(xos, name, attributes) {
 	xos.elementStack.push(name);
 	if (xos.elementStack.length > xos.defaultElementDepth) {
 		const element = {
-			//$path : xos.elementStack.join('/'),
+			$path: xos.elementStack.join("/"),
 			$name: name,
 			$: attributes
 		};
@@ -126,6 +131,9 @@ function startElement(xos, name, attributes) {
 				parent[name] = element;
 			} else if (parent[name] instanceof Array) {
 				parent[name].push(element);
+				if (xos.maxChildren && parent[name].length && xos.maxChildren <= parent[name].length) {
+					return xos.emit("error", "Maximum number of children reached");
+				}
 			} else {
 				parent[name] = [
 					parent[name],
